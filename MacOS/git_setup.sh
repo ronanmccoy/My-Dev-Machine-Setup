@@ -33,7 +33,7 @@ SSH_KEY_COMMENT="$GIT_USER_EMAIL"
 echo
 echo "--> setting up git global config..."
 git config --global user.name "$GIT_USER_NAME"
-git config --global.user.email "$GIT_USER_EMAIL"
+git config --global user.email "$GIT_USER_EMAIL"
 git config --global init.defaultBranch main
 
 
