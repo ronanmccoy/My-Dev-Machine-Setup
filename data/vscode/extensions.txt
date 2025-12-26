@@ -1,0 +1,22 @@
+# -------------------------------------------------------------------------
+# VS Code Extensions List
+# This file contains VS Code extension IDs for automated installation
+# Lines starting with # are comments and will be ignored
+# Empty lines are also ignored
+# Format: extension-id (e.g., esbenp.prettier-vscode)
+# -------------------------------------------------------------------------
+formulahendry.auto-rename-tag
+aaron-bond.better-comments
+alefragnani.bookmarks
+anthropic.claude-dev
+dsznajder.es7-react-js-snippets
+dbaeumer.vscode-eslint
+GitHub.copilot
+GitHub.copilot-chat
+ms-vscode.vscode-typescript-next
+christian-kohler.npm-intellisense
+esbenp.prettier-vscode
+bradlc.vscode-tailwindcss
+Gruntfuggly.todo-tree
+vscode-icons-team.vscode-icons
+
