@@ -8,8 +8,33 @@ Scripts specific to MacOS. Uses Homebrew to install apps.
 
 1. Review `apps.txt`.
 2. Run `sh mac_setup.sh` (might need to use `sudo`).
+   - Use `sh mac_setup.sh --dry-run` or `sh mac_setup.sh -n` to preview what will be done without making changes
 3. (Optional) Run `sh git_setup.sh` (might need to use `sudo`).
 4. (Optional) Run `sh aws_setup.sh` (might need to use `sudo`).
+
+### Dry-Run Mode
+
+The script supports a dry-run mode that shows what would be done without actually making any changes:
+```bash
+sh mac_setup.sh --dry-run
+# or
+sh mac_setup.sh -n
+```
+
+In dry-run mode:
+- All operations are simulated (no actual installations or file modifications)
+- Interactive prompts use default answers
+- Commands that would be executed are displayed
+- Errors for missing files/invalid configs are still collected
+- A log file is still created showing what would happen
+
+### Logging
+
+The script automatically logs all operations to `dev-setup.log` in the project root directory. The log file:
+- Contains timestamps for all operations
+- Includes log levels (INFO, WARNING, ERROR)
+- Appends to the file on each run (preserves history)
+- Can be reviewed to troubleshoot issues or see what was installed
 
 ### apps.txt
 
@@ -54,12 +79,13 @@ The list of aliases that will be added to the shell profile is very specific to 
 - Todo Tree
 - vscode-icons
 
-This list of extensions will eventually be added to the `mac_setup.sh` script.
+VS Code extensions are now automatically installed by the script from `/data/vscode/extensions.txt`.
 
-## To do
+## Features
 
-- [ ] add some prompt asking if the aliases should be set up or skipped.
-- [ ] add a prompt asking if the iTerms theme should be installed or skipped.
-- [ ] add a prompt asking if the settings update to VS Code should be done.
-- [ ] add a prompt asking if the shell prompt should be set up to show git branch information.
-- [ ] updated script to install VS Code extensions and list the extensions in an external file.
+- ✅ Interactive prompts for optional features (VS Code settings, extensions, iTerm theme, shell prompt, aliases)
+- ✅ Automatic VS Code extension installation from external file
+- ✅ Dry-run mode (`--dry-run` or `-n`) to preview changes
+- ✅ Comprehensive logging to `dev-setup.log` in project root
+- ✅ Error collection and reporting system
+- ✅ Improved NVM path handling
