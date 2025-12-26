@@ -9,7 +9,7 @@ awscli
 aws-cdk
 blender
 curl
-# cursor
+cursor
 darktable
 discord
 docker-desktop
