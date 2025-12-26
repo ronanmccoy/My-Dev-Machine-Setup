@@ -8,6 +8,26 @@
 #	new SSH key for Github.com if one doesn't already exist.
 # -------------------------------------------------------------
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+CONFIG_FILE="$PROJECT_ROOT/config.sh"
+
+# Load configuration
+if [ -f "$CONFIG_FILE" ]; then
+	# Source config file and capture errors
+	error_output=$(source "$CONFIG_FILE" 2>&1)
+	if [ $? -ne 0 ]; then
+		echo "❌ Error: Failed to load configuration file: $CONFIG_FILE"
+		echo "   $error_output"
+		exit 1
+	fi
+	# Use config value or default to "main"
+	GIT_DEFAULT_BRANCH="${GIT_DEFAULT_BRANCH:-main}"
+else
+	# Use default if config doesn't exist
+	GIT_DEFAULT_BRANCH="main"
+fi
+
 # ------------------------
 # Validation functions
 # ------------------------
@@ -89,7 +109,7 @@ echo
 echo "--> setting up git global config..."
 git config --global user.name "$GIT_USER_NAME"
 git config --global user.email "$GIT_USER_EMAIL"
-git config --global init.defaultBranch main
+git config --global init.defaultBranch "$GIT_DEFAULT_BRANCH"
 
 
 # ------------------------

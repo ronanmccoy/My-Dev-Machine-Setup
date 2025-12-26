@@ -23,11 +23,12 @@ A set of very opinionated scripts for setting up a new dev machine. The idea her
 
 1. Download the zip, clone this repo, or just copy and paste the scripts and associated file structure.
 2. Open terminal on your machine and `cd` to the directory where this is on your system.
-3. `cd` into `/data/packages` and review the list of NPM packages, making any necessary updates.
-4. `cd` into `/data/themes` and review the theme files and make any updates needed.
-5. `cd` into the directory specific to your platform (currently this has only been tested on MacOS).
-6. Update the list of apps in `apps.txt` if needed.
-7. From the terminal run the appropriate scripts.
+3. **Create `config.sh` in the project root** - This file is required and contains all configurable settings. See `config.sh` for all available options.
+4. `cd` into `/data/packages` and review the list of NPM packages, making any necessary updates.
+5. `cd` into `/data/themes` and review the theme files and make any updates needed.
+6. `cd` into the directory specific to your platform (currently this has only been tested on MacOS).
+7. Update the list of apps in `apps.txt` if needed.
+8. From the terminal run the appropriate scripts.
 
 ## To Do
 

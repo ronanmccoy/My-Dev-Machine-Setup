@@ -89,3 +89,36 @@ VS Code extensions are now automatically installed by the script from `/data/vsc
 - ✅ Comprehensive logging to `dev-setup.log` in project root
 - ✅ Error collection and reporting system
 - ✅ Improved NVM path handling
+- ✅ Configuration file (`config.sh`) for customizing all settings
+
+### Configuration File
+
+The setup scripts use a configuration file at the project root: `config.sh`
+
+This file allows you to customize:
+- **VS Code settings**: Font size, tab size, theme, icon theme, and other preferences
+- **Default prompt answers**: Set defaults for interactive prompts (install VS Code settings, extensions, etc.)
+- **Git configuration**: Default branch name
+- **Node.js version**: Which Node.js version to install via NVM
+
+**Important**: The `config.sh` file is **required**. If it's missing or contains errors, the script will fail with clear error messages indicating what's wrong.
+
+Example configuration:
+```bash
+# VS Code Settings
+VSCODE_FONT_SIZE=13
+VSCODE_TAB_SIZE=4
+VSCODE_COLOR_THEME="Visual Studio Dark"
+
+# Default Prompt Answers
+PROMPT_INSTALL_VSCODE_SETTINGS=true
+PROMPT_INSTALL_SHELL_ALIASES=false
+
+# Git Configuration
+GIT_DEFAULT_BRANCH="main"
+
+# Node.js Version
+NODE_VERSION="node"  # or specific version like "18.17.0"
+```
+
+See `config.sh` in the project root for all available configuration options.

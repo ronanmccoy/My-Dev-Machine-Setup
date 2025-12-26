@@ -25,6 +25,121 @@ NPM_PACKAGES_FILE="$SCRIPT_DIR/../data/packages/packages.txt"
 VSCODE_EXTENSIONS_FILE="$SCRIPT_DIR/../data/vscode/extensions.txt"
 ITERM_THEME_FILE="$SCRIPT_DIR/../data/themes/iTerm-Ronans-Theme.json"
 LOG_FILE="$PROJECT_ROOT/dev-setup.log"
+CONFIG_FILE="$PROJECT_ROOT/config.sh"
+
+# ------------------------
+# Configuration loading and validation
+# ------------------------
+load_config() {
+	local config_file="$CONFIG_FILE"
+	
+	# Check if config file exists
+	if [ ! -f "$config_file" ]; then
+		echo "❌ Error: Configuration file not found at: $config_file"
+		echo "   Please create config.sh in the project root directory."
+		echo "   You can copy config.sh.example if one exists, or create it manually."
+		exit 1
+	fi
+	
+	# Try to source the config file and capture any errors
+	local error_output
+	error_output=$(source "$config_file" 2>&1)
+	local source_exit_code=$?
+	
+	if [ $source_exit_code -ne 0 ]; then
+		echo "❌ Error: Failed to load configuration file due to syntax error."
+		echo "   File: $config_file"
+		echo "   Error details:"
+		echo "   $error_output"
+		echo ""
+		echo "   Please check the syntax of your config.sh file."
+		echo "   Common issues:"
+		echo "   - Missing quotes around values with spaces"
+		echo "   - Invalid variable names"
+		echo "   - Syntax errors in variable assignments"
+		exit 1
+	fi
+	
+	# Validate required variables are set
+	local missing_vars=()
+	local invalid_vars=()
+	
+	# Check VS Code settings
+	[ -z "${VSCODE_FONT_SIZE:-}" ] && missing_vars+=("VSCODE_FONT_SIZE")
+	[ -z "${VSCODE_TAB_SIZE:-}" ] && missing_vars+=("VSCODE_TAB_SIZE")
+	[ -z "${VSCODE_COLOR_THEME:-}" ] && missing_vars+=("VSCODE_COLOR_THEME")
+	[ -z "${VSCODE_ICON_THEME:-}" ] && missing_vars+=("VSCODE_ICON_THEME")
+	[ -z "${VSCODE_FORMAT_ON_SAVE:-}" ] && missing_vars+=("VSCODE_FORMAT_ON_SAVE")
+	[ -z "${VSCODE_AUTO_SAVE:-}" ] && missing_vars+=("VSCODE_AUTO_SAVE")
+	[ -z "${VSCODE_DEFAULT_FORMATTER:-}" ] && missing_vars+=("VSCODE_DEFAULT_FORMATTER")
+	[ -z "${VSCODE_WORD_WRAP:-}" ] && missing_vars+=("VSCODE_WORD_WRAP")
+	
+	# Check prompt defaults
+	[ -z "${PROMPT_INSTALL_VSCODE_SETTINGS:-}" ] && missing_vars+=("PROMPT_INSTALL_VSCODE_SETTINGS")
+	[ -z "${PROMPT_INSTALL_VSCODE_EXTENSIONS:-}" ] && missing_vars+=("PROMPT_INSTALL_VSCODE_EXTENSIONS")
+	[ -z "${PROMPT_INSTALL_ITERM_THEME:-}" ] && missing_vars+=("PROMPT_INSTALL_ITERM_THEME")
+	[ -z "${PROMPT_INSTALL_SHELL_PROMPT:-}" ] && missing_vars+=("PROMPT_INSTALL_SHELL_PROMPT")
+	[ -z "${PROMPT_INSTALL_SHELL_ALIASES:-}" ] && missing_vars+=("PROMPT_INSTALL_SHELL_ALIASES")
+	
+	# Check git config
+	[ -z "${GIT_DEFAULT_BRANCH:-}" ] && missing_vars+=("GIT_DEFAULT_BRANCH")
+	
+	# Check node config
+	[ -z "${NODE_VERSION:-}" ] && missing_vars+=("NODE_VERSION")
+	
+	# Report missing variables
+	if [ ${#missing_vars[@]} -ne 0 ]; then
+		echo "❌ Error: Configuration file is missing required variables:"
+		for var in "${missing_vars[@]}"; do
+			echo "   - $var"
+		done
+		echo ""
+		echo "   Please ensure all required variables are set in: $config_file"
+		exit 1
+	fi
+	
+	# Validate boolean values
+	local bool_vars=(
+		"VSCODE_FORMAT_ON_SAVE"
+		"PROMPT_INSTALL_VSCODE_SETTINGS"
+		"PROMPT_INSTALL_VSCODE_EXTENSIONS"
+		"PROMPT_INSTALL_ITERM_THEME"
+		"PROMPT_INSTALL_SHELL_PROMPT"
+		"PROMPT_INSTALL_SHELL_ALIASES"
+	)
+	
+	for var in "${bool_vars[@]}"; do
+		local value="${!var}"
+		if [[ "$value" != "true" && "$value" != "false" ]]; then
+			invalid_vars+=("$var (must be 'true' or 'false', got: '$value')")
+		fi
+	done
+	
+	# Validate numeric values
+	if ! [[ "$VSCODE_FONT_SIZE" =~ ^[0-9]+$ ]] || [ "$VSCODE_FONT_SIZE" -lt 8 ] || [ "$VSCODE_FONT_SIZE" -gt 48 ]; then
+		invalid_vars+=("VSCODE_FONT_SIZE (must be a number between 8 and 48, got: '$VSCODE_FONT_SIZE')")
+	fi
+	
+	if ! [[ "$VSCODE_TAB_SIZE" =~ ^[0-9]+$ ]] || [ "$VSCODE_TAB_SIZE" -lt 1 ] || [ "$VSCODE_TAB_SIZE" -gt 8 ]; then
+		invalid_vars+=("VSCODE_TAB_SIZE (must be a number between 1 and 8, got: '$VSCODE_TAB_SIZE')")
+	fi
+	
+	# Report invalid values
+	if [ ${#invalid_vars[@]} -ne 0 ]; then
+		echo "❌ Error: Configuration file contains invalid values:"
+		for var in "${invalid_vars[@]}"; do
+			echo "   - $var"
+		done
+		echo ""
+		echo "   Please fix these values in: $config_file"
+		exit 1
+	fi
+	
+	return 0
+}
+
+# Load configuration (this will exit if config is invalid)
+load_config
 
 # ------------------------
 # Dry-run mode detection
@@ -289,17 +404,17 @@ if init_nvm; then
 	
 	# Install Node.js via NVM
 	if [ "$DRY_RUN" = true ]; then
-		log_info "[DRY RUN] Would run: nvm install node"
-		log_info "[DRY RUN] Would run: nvm use node"
-		log_info "[DRY RUN] Would run: nvm alias default node"
+		log_info "[DRY RUN] Would run: nvm install $NODE_VERSION"
+		log_info "[DRY RUN] Would run: nvm use $NODE_VERSION"
+		log_info "[DRY RUN] Would run: nvm alias default $NODE_VERSION"
 	else
-		log_info "--> installing node via nvm..."
-		if nvm install node; then
-			nvm use node
-			nvm alias default node
-			log_info "	✓ Node.js installed via NVM"
+		log_info "--> installing node version: $NODE_VERSION via nvm..."
+		if nvm install "$NODE_VERSION"; then
+			nvm use "$NODE_VERSION"
+			nvm alias default "$NODE_VERSION"
+			log_info "	✓ Node.js $NODE_VERSION installed via NVM"
 		else
-			collect_error "Failed to install Node.js via NVM"
+			collect_error "Failed to install Node.js $NODE_VERSION via NVM"
 		fi
 	fi
 else
@@ -362,7 +477,11 @@ if [ -d "/Applications/Visual Studio Code.app" ] || [ -d "$HOME/Applications/Vis
 	VSCODE_INSTALLED=true
 	
 	# Prompt for VS Code settings
-	if prompt_yes_no "Do you want to update VS Code settings?" "y"; then
+	local vscode_settings_default="y"
+	if [ "$PROMPT_INSTALL_VSCODE_SETTINGS" = "false" ]; then
+		vscode_settings_default="n"
+	fi
+	if prompt_yes_no "Do you want to update VS Code settings?" "$vscode_settings_default"; then
 		if [ "$DRY_RUN" = true ]; then
 			log_info "[DRY RUN] Would update VS Code settings at: $VSCODE_SETTINGS"
 			if [ -f "$VSCODE_SETTINGS" ]; then
@@ -379,16 +498,22 @@ if [ -d "/Applications/Visual Studio Code.app" ] || [ -d "$HOME/Applications/Vis
 				log_info "	✓ Backed up existing settings"
 			fi
 			
+			# Convert boolean to JSON boolean
+			local format_on_save_json="true"
+			if [ "$VSCODE_FORMAT_ON_SAVE" = "false" ]; then
+				format_on_save_json="false"
+			fi
+			
 			cat > "$VSCODE_SETTINGS" <<EOL
 {
-	"editor.fontSize": 13,
-	"editor.formatOnSave": true,
-	"files.autoSave": "afterDelay",
-	"editor.defaultFormatter": "esbenp.prettier-vscode",
-	"editor.wordWrap": "on",
-	"workbench.colorTheme": "Visual Studio Dark",
-	"workbench.iconTheme": "vscode-icons",
-	"editor.tabSize": 4
+	"editor.fontSize": $VSCODE_FONT_SIZE,
+	"editor.formatOnSave": $format_on_save_json,
+	"files.autoSave": "$VSCODE_AUTO_SAVE",
+	"editor.defaultFormatter": "$VSCODE_DEFAULT_FORMATTER",
+	"editor.wordWrap": "$VSCODE_WORD_WRAP",
+	"workbench.colorTheme": "$VSCODE_COLOR_THEME",
+	"workbench.iconTheme": "$VSCODE_ICON_THEME",
+	"editor.tabSize": $VSCODE_TAB_SIZE
 }
 EOL
 			log_info "	✓ VS Code settings updated"
@@ -398,7 +523,11 @@ EOL
 	fi
 	
 	# Install VS Code extensions
-	if prompt_yes_no "Do you want to install VS Code extensions?" "y"; then
+	local vscode_extensions_default="y"
+	if [ "$PROMPT_INSTALL_VSCODE_EXTENSIONS" = "false" ]; then
+		vscode_extensions_default="n"
+	fi
+	if prompt_yes_no "Do you want to install VS Code extensions?" "$vscode_extensions_default"; then
 		if [ ! -f "$VSCODE_EXTENSIONS_FILE" ]; then
 			collect_error "VS Code extensions file not found at $VSCODE_EXTENSIONS_FILE"
 		else
@@ -459,7 +588,11 @@ THEME_FILE="$ITERM_THEME_FILE"
 PROFILE_DIR="$HOME/Library/Application Support/iTerm2/DynamicProfiles"
 
 if [ -d "/Applications/iTerm.app" ]; then
-	if prompt_yes_no "Do you want to install the iTerm theme?" "y"; then
+	local iterm_theme_default="y"
+	if [ "$PROMPT_INSTALL_ITERM_THEME" = "false" ]; then
+		iterm_theme_default="n"
+	fi
+	if prompt_yes_no "Do you want to install the iTerm theme?" "$iterm_theme_default"; then
 		if [ "$DRY_RUN" = true ]; then
 			if [ -f "$THEME_FILE" ]; then
 				log_info "[DRY RUN] Would copy iTerm theme from: $THEME_FILE"
@@ -517,7 +650,11 @@ if command -v nvm &> /dev/null || init_nvm; then
 fi
 
 # Prompt for custom shell prompt
-if prompt_yes_no "Do you want to set up a custom shell prompt with git branch information?" "y"; then
+local shell_prompt_default="y"
+if [ "$PROMPT_INSTALL_SHELL_PROMPT" = "false" ]; then
+	shell_prompt_default="n"
+fi
+if prompt_yes_no "Do you want to set up a custom shell prompt with git branch information?" "$shell_prompt_default"; then
 	if ! grep -q "# Custom prompt" "$SHELL_PROFILE" 2>/dev/null; then
 		if [ "$DRY_RUN" = true ]; then
 			log_info "[DRY RUN] Would add custom prompt configuration to: $SHELL_PROFILE"
@@ -547,7 +684,11 @@ else
 fi
 
 # Prompt for custom aliases
-if prompt_yes_no "Do you want to add custom shell aliases?" "y"; then
+local shell_aliases_default="y"
+if [ "$PROMPT_INSTALL_SHELL_ALIASES" = "false" ]; then
+	shell_aliases_default="n"
+fi
+if prompt_yes_no "Do you want to add custom shell aliases?" "$shell_aliases_default"; then
 	if ! grep -q "# Custom Aliases" "$SHELL_PROFILE" 2>/dev/null; then
 		if [ "$DRY_RUN" = true ]; then
 			log_info "[DRY RUN] Would add custom aliases to: $SHELL_PROFILE"
