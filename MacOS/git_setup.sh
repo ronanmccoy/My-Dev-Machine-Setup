@@ -8,6 +8,49 @@
 #	new SSH key for Github.com if one doesn't already exist.
 # -------------------------------------------------------------
 
+# ------------------------
+# Validation functions
+# ------------------------
+validate_email() {
+    local email=$1
+    # Basic email validation regex
+    local email_regex='^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    
+    if [[ -z "$email" ]]; then
+        echo "❌ Error: Email cannot be empty."
+        return 1
+    fi
+    
+    if [[ ! "$email" =~ $email_regex ]]; then
+        echo "❌ Error: Invalid email format. Please enter a valid email address."
+        return 1
+    fi
+    
+    return 0
+}
+
+validate_name() {
+    local name=$1
+    
+    if [[ -z "$name" ]]; then
+        echo "❌ Error: Name cannot be empty."
+        return 1
+    fi
+    
+    # Check for reasonable length (1-100 characters)
+    if [[ ${#name} -lt 1 ]] || [[ ${#name} -gt 100 ]]; then
+        echo "❌ Error: Name must be between 1 and 100 characters."
+        return 1
+    fi
+    
+    # Check for only whitespace
+    if [[ "$name" =~ ^[[:space:]]+$ ]]; then
+        echo "❌ Error: Name cannot be only whitespace."
+        return 1
+    fi
+    
+    return 0
+}
 
 # ------------------------
 # check for git
@@ -22,8 +65,20 @@ fi
 # ------------------------
 # user info
 # ------------------------
-read -p "Enter your name to use with git: " GIT_USER_NAME
-read -p "Enter your email to use with git: " GIT_USER_EMAIL
+while true; do
+    read -p "Enter your name to use with git: " GIT_USER_NAME
+    if validate_name "$GIT_USER_NAME"; then
+        break
+    fi
+done
+
+while true; do
+    read -p "Enter your email to use with git: " GIT_USER_EMAIL
+    if validate_email "$GIT_USER_EMAIL"; then
+        break
+    fi
+done
+
 SSH_KEY_COMMENT="$GIT_USER_EMAIL"
 
 
