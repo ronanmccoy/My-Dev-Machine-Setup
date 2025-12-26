@@ -30,6 +30,36 @@ A set of very opinionated scripts for setting up a new dev machine. The idea her
 7. Update the list of apps in `apps.txt` if needed.
 8. From the terminal run the appropriate scripts.
 
+## Health Check
+
+After running the setup scripts, you can verify that everything was installed correctly:
+
+```bash
+sh health-check.sh
+```
+
+The health check script verifies:
+- Homebrew installation
+- All applications from `apps.txt`
+- Node.js and NPM installation
+- NPM global packages
+- VS Code installation, settings, and extensions
+- Git configuration and SSH keys
+- AWS CLI configuration (optional)
+- iTerm theme installation
+- Shell profile customizations
+
+**Options:**
+- `--quiet` or `-q`: Minimal output (only failures)
+- `--verbose` or `-v`: Detailed output
+- `--test-ssh`: Test GitHub SSH connection
+- `--test-aws`: Test AWS CLI credentials
+
+**Exit Codes:**
+- `0`: All checks passed
+- `1`: Critical failures found
+- `2`: Warnings only (optional items missing)
+
 ## To Do
 
 - [ ] Add [AWS-CDK](https://github.com/aws/aws-cdk?tab=readme-ov-file#getting-started).

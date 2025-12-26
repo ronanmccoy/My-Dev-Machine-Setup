@@ -122,3 +122,13 @@ NODE_VERSION="node"  # or specific version like "18.17.0"
 ```
 
 See `config.sh` in the project root for all available configuration options.
+
+### Health Check
+
+After running the setup scripts, verify everything was installed correctly:
+
+```bash
+sh ../health-check.sh
+```
+
+The health check verifies all installed components and provides a detailed report. See the main README for more information.
